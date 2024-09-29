@@ -11,16 +11,15 @@ public class UserService {
     private UserRepository userRepository;
 
     public User register(User user) {
-        // 实现注册逻辑
+        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+            throw new IllegalArgumentException("用户名已存在");
+        }
         return userRepository.save(user);
     }
 
     public User login(String username, String password) {
-        // 实现登录逻辑
-        User user = userRepository.findByUsername(username);
-        if (user != null && user.getPassword().equals(password)) {
-            return user;
-        }
-        return null;
+        return userRepository.findByUsername(username)
+                .filter(user -> user.getPassword().equals(password))
+                .orElse(null);
     }
 }

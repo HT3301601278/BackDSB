@@ -13,8 +13,13 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/register")
-    public ResponseEntity<User> register(@RequestBody User user) {
-        return ResponseEntity.ok(userService.register(user));
+    public ResponseEntity<?> register(@RequestBody User user) {
+        try {
+            User registeredUser = userService.register(user);
+            return ResponseEntity.ok(registeredUser);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PostMapping("/login")
