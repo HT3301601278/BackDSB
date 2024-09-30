@@ -13,7 +13,6 @@ import org.example.backpro.entity.DeviceData;
 
 import java.util.List;
 
-import org.springframework.data.repository.query.Param;
 
 @Service
 public class DeviceService {
