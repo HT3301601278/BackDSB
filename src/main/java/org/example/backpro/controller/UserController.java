@@ -41,16 +41,16 @@ public class UserController {
     public ResponseEntity<?> changePassword(@PathVariable Long id,
                                             @RequestParam String oldPassword,
                                             @RequestParam String newPassword) {
-        logger.info("Attempting to change password for user with id: {}", id);
+        logger.info("尝试修改用户ID为{}的密码", id);
         try {
             User updatedUser = userService.changePassword(id, oldPassword, newPassword);
-            logger.info("Password changed successfully for user with id: {}", id);
+            logger.info("用户ID为{}的密码修改成功", id);
             return ResponseEntity.ok(updatedUser);
         } catch (IllegalArgumentException e) {
-            logger.error("Failed to change password for user with id: {}. Reason: {}", id, e.getMessage());
+            logger.error("用户ID为{}的密码修改失败。原因: {}", id, e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (ResourceNotFoundException e) {
-            logger.error("User not found with id: {}", id);
+            logger.error("未找到ID为{}的用户", id);
             return ResponseEntity.notFound().build();
         }
     }
