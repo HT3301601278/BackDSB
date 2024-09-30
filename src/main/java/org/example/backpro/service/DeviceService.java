@@ -12,7 +12,7 @@ import java.util.Date;
 import org.example.backpro.entity.DeviceData;
 
 import java.util.List;
-
+import java.math.BigDecimal;
 
 @Service
 public class DeviceService {
@@ -21,6 +21,9 @@ public class DeviceService {
 
     @Autowired
     private DeviceDataRepository deviceDataRepository;
+
+    @Autowired
+    private DataUpdateService dataUpdateService;
 
     public Device addDevice(Device device) {
         return deviceRepository.save(device);
@@ -59,7 +62,20 @@ public class DeviceService {
     public Device setThreshold(Long id, Double threshold) {
         Device device = getDevice(id);
         device.setThreshold(threshold);
-        return deviceRepository.save(device);
+        Device savedDevice = deviceRepository.save(device);
+
+        // 立即检查当前值是否超过新设置的阈值
+        List<DeviceData> recentData = deviceDataRepository.findTopByDeviceOrderByRecordTimeDesc(device, PageRequest.of(0, 1));
+        if (!recentData.isEmpty()) {
+            DeviceData latestData = recentData.get(0);
+            BigDecimal currentValue = new BigDecimal(latestData.getValue());
+            BigDecimal thresholdValue = BigDecimal.valueOf(threshold);
+            if (currentValue.compareTo(thresholdValue) >= 0) {
+                dataUpdateService.sendThresholdWarning(device, currentValue);
+            }
+        }
+
+        return savedDevice;
     }
 
     public Device toggleDevice(Long id) {

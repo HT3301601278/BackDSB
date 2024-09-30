@@ -16,4 +16,6 @@ public interface DeviceDataRepository extends JpaRepository<DeviceData, Long> {
 
 	@Query("SELECT dd FROM DeviceData dd WHERE dd.device = :device AND dd.recordTime BETWEEN :startTime AND :endTime")
 	Page<DeviceData> findByDeviceAndRecordTimeBetween(Device device, Date startTime, Date endTime, Pageable pageable);
+
+	List<DeviceData> findTopByDeviceOrderByRecordTimeDesc(Device device, Pageable pageable);
 }
