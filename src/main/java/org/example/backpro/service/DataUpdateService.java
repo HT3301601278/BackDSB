@@ -47,10 +47,19 @@ public class DataUpdateService {
                 deviceData.setDevice(device);
 
                 deviceDataRepository.save(deviceData);
+
+                if (device.getThreshold() != null && Double.parseDouble(value) >= device.getThreshold()) {
+                    // 发送阈值警告消息（这里需要实现WebSocket或其他实时通信机制）
+                    sendThresholdWarning(device);
+                }
             }
         } catch (Exception e) {
             // 处理异常
             e.printStackTrace();
         }
+    }
+
+    private void sendThresholdWarning(Device device) {
+        // 这里需要实现WebSocket或其他实时通信机制
     }
 }

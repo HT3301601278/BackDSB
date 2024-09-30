@@ -41,4 +41,27 @@ public class Device {
     public void setCommunicationChannel(String communicationChannel) {
         this.communicationChannel = communicationChannel;
     }
+
+    private Double threshold;
+    private Boolean isOn = false;
+
+    public Double getThreshold() {
+        return threshold;
+    }
+
+    public void setThreshold(Double threshold) {
+        this.threshold = threshold;
+    }
+
+    public Boolean getIsOn() {
+        return isOn;
+    }
+
+    public void setIsOn(Boolean isOn) {
+        this.isOn = isOn;
+    }
+
+    public Long getId() {
+        return id;
+    }
 }

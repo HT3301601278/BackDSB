@@ -47,4 +47,7 @@ public class DeviceData {
     public Device getDevice() {
         return device;
     }
+
+    public DeviceData() {
+    }
 }
