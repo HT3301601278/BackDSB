@@ -41,9 +41,18 @@ public class DeviceService {
 
     public Device updateDevice(Long id, Device deviceDetails) {
         Device device = getDevice(id);
-        device.setName(deviceDetails.getName());
-        device.setMacAddress(deviceDetails.getMacAddress());
-        device.setCommunicationChannel(deviceDetails.getCommunicationChannel());
+        if (deviceDetails.getName() != null) {
+            device.setName(deviceDetails.getName());
+        }
+        if (deviceDetails.getMacAddress() != null) {
+            device.setMacAddress(deviceDetails.getMacAddress());
+        }
+        if (deviceDetails.getCommunicationChannel() != null) {
+            device.setCommunicationChannel(deviceDetails.getCommunicationChannel());
+        }
+        if (deviceDetails.getThreshold() != null) {
+            device.setThreshold(deviceDetails.getThreshold());
+        }
         return deviceRepository.save(device);
     }
 
