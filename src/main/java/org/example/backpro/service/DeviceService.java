@@ -93,7 +93,7 @@ public class DeviceService {
         Device device = getDevice(deviceId);
         DeviceData deviceData = new DeviceData();
         deviceData.setDevice(device);
-        deviceData.setRecordTime(recordTime);
+        deviceData.setRecordTime(new java.sql.Timestamp(recordTime.getTime()));
         deviceData.setValue(value);
         return deviceDataRepository.save(deviceData);
     }

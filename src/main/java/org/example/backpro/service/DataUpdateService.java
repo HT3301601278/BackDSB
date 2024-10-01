@@ -51,7 +51,7 @@ public class DataUpdateService {
 
                 DeviceData deviceData = new DeviceData();
                 deviceData.setValue(value);
-                deviceData.setRecordTime(recordTime);
+                deviceData.setRecordTime(new java.sql.Timestamp(recordTime.getTime()));
                 deviceData.setDevice(device);
 
                 deviceDataRepository.save(deviceData);

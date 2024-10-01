@@ -6,6 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.util.Date;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/data-generation")
@@ -14,15 +20,19 @@ public class DataGenerationController {
     @Autowired
     private DataGenerationService dataGenerationService;
 
+    private static final Logger logger = LoggerFactory.getLogger(DataGenerationController.class);
+
     @PostMapping("/start")
     public ResponseEntity<String> startDataGeneration(
             @RequestParam Long deviceId,
             @RequestParam int durationMinutes,
             @RequestParam int intervalSeconds,
             @RequestParam int minValue,
-            @RequestParam int maxValue) {
+            @RequestParam int maxValue,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date startTime) {
+        logger.info("接收到数据生成请求：deviceId={}, startTime={}", deviceId, startTime);
         try {
-            dataGenerationService.startDataGeneration(deviceId, durationMinutes, intervalSeconds, minValue, maxValue);
+            dataGenerationService.startDataGeneration(deviceId, durationMinutes, intervalSeconds, minValue, maxValue, startTime);
             return ResponseEntity.ok("数据生成任务已启动");
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
