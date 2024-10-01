@@ -105,4 +105,8 @@ public class DeviceService {
         }
         return deviceDataRepository.findByDeviceAndValueGreaterThanEqual(device, device.getThreshold().toString());
     }
+
+    public List<Device> getAllDevicesList() {
+        return deviceRepository.findAll();
+    }
 }

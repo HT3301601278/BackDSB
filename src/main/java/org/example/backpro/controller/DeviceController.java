@@ -82,4 +82,9 @@ public class DeviceController {
         List<DeviceData> deviceData = deviceService.getDeviceDataAboveThreshold(id);
         return ResponseEntity.ok(deviceData);
     }
+
+    @GetMapping("/list")
+    public ResponseEntity<List<Device>> getAllDevicesList() {
+        return ResponseEntity.ok(deviceService.getAllDevicesList());
+    }
 }
