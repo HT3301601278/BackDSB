@@ -14,6 +14,8 @@ import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class DataGenerationService {
@@ -25,32 +27,45 @@ public class DataGenerationService {
     private DeviceDataRepository deviceDataRepository;
 
     private final Random random = new Random();
+    private final Map<Long, ScheduledExecutorService> deviceExecutors = new ConcurrentHashMap<>();
 
     @Async
-    public void startDataGeneration(Long deviceId, int durationMinutes, int intervalSeconds) {
+    public void startDataGeneration(Long deviceId, int durationMinutes, int intervalSeconds, int minValue, int maxValue) {
         Device device = deviceRepository.findById(deviceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Device not found with id: " + deviceId));
 
         ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+        deviceExecutors.put(deviceId, executor);
 
-        executor.scheduleAtFixedRate(() -> generateAndSaveData(device),
+        executor.scheduleAtFixedRate(() -> generateAndSaveData(device, minValue, maxValue),
                 0, intervalSeconds, TimeUnit.SECONDS);
 
         executor.schedule(() -> {
-            executor.shutdown();
-            try {
-                executor.awaitTermination(1, TimeUnit.MINUTES);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+            stopDataGeneration(deviceId);
         }, durationMinutes, TimeUnit.MINUTES);
     }
 
-    private void generateAndSaveData(Device device) {
+    private void generateAndSaveData(Device device, int minValue, int maxValue) {
         DeviceData deviceData = new DeviceData();
         deviceData.setDevice(device);
-        deviceData.setValue(String.valueOf(random.nextDouble() * 100)); // 生成0到100之间的随机数
+        int randomValue = random.nextInt(maxValue - minValue + 1) + minValue;
+        deviceData.setValue(String.valueOf(randomValue));
         deviceData.setRecordTime(new Date());
         deviceDataRepository.save(deviceData);
+    }
+
+    public void stopDataGeneration(Long deviceId) {
+        ScheduledExecutorService executor = deviceExecutors.remove(deviceId);
+        if (executor != null) {
+            executor.shutdown();
+            try {
+                if (!executor.awaitTermination(1, TimeUnit.MINUTES)) {
+                    executor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                executor.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 }
