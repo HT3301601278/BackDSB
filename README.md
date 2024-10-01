@@ -1,4 +1,3 @@
-```markdown
 # BackPro 项目
 
 ## 项目概述
@@ -460,12 +459,3 @@ mvn test
 3. **实时接收警报**
 
    客户端通过 WebSocket 连接到 `ws://localhost:8080/ws/alerts`，监听实时警报消息。
-
-## 问题反馈与贡献
-
-如果在使用过程中遇到任何问题或有改进建议，欢迎提交 [Issue](https://github.com/your-repo/backpro/issues)。也欢迎通过 [Pull Requests](https://github.com/your-repo/backpro/pulls) 进行贡献。
-
-## 许可证
-
-该项目采用 MIT 许可证。详情请参见 [LICENSE](LICENSE) 文件。
-```
