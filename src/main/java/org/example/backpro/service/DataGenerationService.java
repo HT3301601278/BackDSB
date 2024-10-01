@@ -22,6 +22,9 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.math.BigDecimal;
+
+import org.example.backpro.websocket.AlertWebSocketHandler;
 
 @Service
 public class DataGenerationService {
@@ -31,6 +34,9 @@ public class DataGenerationService {
 
     @Autowired
     private DeviceDataRepository deviceDataRepository;
+
+    @Autowired
+    private AlertWebSocketHandler alertWebSocketHandler;
 
     private final Random random = new Random();
     private final Map<Long, ScheduledExecutorService> deviceExecutors = new ConcurrentHashMap<>();
@@ -77,6 +83,18 @@ public class DataGenerationService {
         deviceData.setRecordTime(java.sql.Timestamp.from(recordZdt.toInstant()));
         
         deviceDataRepository.save(deviceData);
+
+        if (device.getThreshold() != null) {
+            BigDecimal thresholdValue = BigDecimal.valueOf(device.getThreshold());
+            BigDecimal currentValue = new BigDecimal(deviceData.getValue());
+            if (currentValue.compareTo(thresholdValue) >= 0) {
+                logger.warn("警告: 设备 {} (ID: {}) 的当前数值 {} 超过阈值 {}", 
+                    device.getName(), device.getId(), currentValue, thresholdValue);
+                String message = String.format("警告: 设备 %s (ID: %d) 的当前数值 %.2f 超过阈值 %.2f", 
+                    device.getName(), device.getId(), currentValue, thresholdValue);
+                alertWebSocketHandler.sendAlertToAll(message);
+            }
+        }
 
         logger.info("生成设备ID {} 的数据，记录时间：{}", deviceId, recordZdt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
     }
