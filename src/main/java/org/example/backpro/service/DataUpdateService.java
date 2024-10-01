@@ -18,8 +18,13 @@ import org.example.backpro.websocket.AlertWebSocketHandler;
 import java.math.BigDecimal;
 import org.example.backpro.exception.ResourceNotFoundException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 public class DataUpdateService {
+    private static final Logger logger = LoggerFactory.getLogger(DataUpdateService.class);
+
     @Autowired
     private DeviceRepository deviceRepository;
 
@@ -76,6 +81,7 @@ public class DataUpdateService {
     public void sendThresholdWarning(Device device, BigDecimal currentValue) {
         String message = String.format("警告: 设备 %s (MAC地址: %s) 的当前数值 %.2f 超过阈值 %.2f", 
             device.getName(), device.getMacAddress(), currentValue, device.getThreshold());
+        logger.warn(message);  // 添加这行日志
         alertWebSocketHandler.sendAlertToAll(message);
     }
 }
