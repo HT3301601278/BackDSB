@@ -12,7 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Component
 public class AlertWebSocketHandler extends TextWebSocketHandler {
 
-    private static final List<WebSocketSession> sessions = new CopyOnWriteArrayList<>();
+    private final List<WebSocketSession> sessions = new CopyOnWriteArrayList<>();
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {

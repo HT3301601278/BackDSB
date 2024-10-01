@@ -1,7 +1,6 @@
 package org.example.backpro.config;
 
 import org.example.backpro.websocket.AlertWebSocketHandler;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
@@ -11,12 +10,14 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 @EnableWebSocket
 public class WebSocketConfig implements WebSocketConfigurer {
 
-    @Autowired
-    private AlertWebSocketHandler alertWebSocketHandler;
+    private final AlertWebSocketHandler alertWebSocketHandler;
+
+    public WebSocketConfig(AlertWebSocketHandler alertWebSocketHandler) {
+        this.alertWebSocketHandler = alertWebSocketHandler;
+    }
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(alertWebSocketHandler, "/ws/alerts")
-                .setAllowedOrigins("*");
+        registry.addHandler(alertWebSocketHandler, "/ws/alerts").setAllowedOrigins("*");
     }
 }
