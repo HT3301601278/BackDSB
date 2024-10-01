@@ -11,8 +11,8 @@ public class DeviceData {
     private Long id;
     private String value;
     
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date recordTime;
+    @Column(columnDefinition = "TIMESTAMP")
+    private java.sql.Timestamp recordTime;
 
     @ManyToOne
     @JoinColumn(name = "device_id")
@@ -24,7 +24,7 @@ public class DeviceData {
         this.value = value;
     }
 
-    public void setRecordTime(Date recordTime) {
+    public void setRecordTime(java.sql.Timestamp recordTime) {
         this.recordTime = recordTime;
     }
 
@@ -40,7 +40,7 @@ public class DeviceData {
         return value;
     }
 
-    public Date getRecordTime() {
+    public java.sql.Timestamp getRecordTime() {
         return recordTime;
     }
 

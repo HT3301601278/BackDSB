@@ -12,7 +12,7 @@ import java.util.Date;
 import org.example.backpro.entity.DeviceData;
 
 import java.util.List;
-
+import java.math.BigDecimal;
 
 @Service
 public class DeviceService {
@@ -21,6 +21,9 @@ public class DeviceService {
 
     @Autowired
     private DeviceDataRepository deviceDataRepository;
+
+    @Autowired
+    private DataUpdateService dataUpdateService;
 
     public Device addDevice(Device device) {
         return deviceRepository.save(device);
@@ -59,7 +62,20 @@ public class DeviceService {
     public Device setThreshold(Long id, Double threshold) {
         Device device = getDevice(id);
         device.setThreshold(threshold);
-        return deviceRepository.save(device);
+        Device savedDevice = deviceRepository.save(device);
+
+        // 立即检查当前值是否超过新设置的阈值
+        List<DeviceData> recentData = deviceDataRepository.findTopByDeviceOrderByRecordTimeDesc(device, PageRequest.of(0, 1));
+        if (!recentData.isEmpty()) {
+            DeviceData latestData = recentData.get(0);
+            BigDecimal currentValue = new BigDecimal(latestData.getValue());
+            BigDecimal thresholdValue = BigDecimal.valueOf(threshold);
+            if (currentValue.compareTo(thresholdValue) >= 0) {
+                dataUpdateService.sendThresholdWarning(device, currentValue);
+            }
+        }
+
+        return savedDevice;
     }
 
     public Device toggleDevice(Long id) {
@@ -77,7 +93,7 @@ public class DeviceService {
         Device device = getDevice(deviceId);
         DeviceData deviceData = new DeviceData();
         deviceData.setDevice(device);
-        deviceData.setRecordTime(recordTime);
+        deviceData.setRecordTime(new java.sql.Timestamp(recordTime.getTime()));
         deviceData.setValue(value);
         return deviceDataRepository.save(deviceData);
     }
@@ -88,5 +104,9 @@ public class DeviceService {
             throw new IllegalStateException("Device threshold is not set");
         }
         return deviceDataRepository.findByDeviceAndValueGreaterThanEqual(device, device.getThreshold().toString());
+    }
+
+    public List<Device> getAllDevicesList() {
+        return deviceRepository.findAll();
     }
 }

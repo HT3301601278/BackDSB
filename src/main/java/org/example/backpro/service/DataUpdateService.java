@@ -13,8 +13,18 @@ import org.springframework.web.client.RestTemplate;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.example.backpro.websocket.AlertWebSocketHandler;
+
+import java.math.BigDecimal;
+import org.example.backpro.exception.ResourceNotFoundException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 public class DataUpdateService {
+    private static final Logger logger = LoggerFactory.getLogger(DataUpdateService.class);
+
     @Autowired
     private DeviceRepository deviceRepository;
 
@@ -33,6 +43,9 @@ public class DataUpdateService {
             JsonNode datapoints = root.get("datapoints");
 
             Device device = deviceRepository.findByMacAddress(macAddress);
+            if (device == null) {
+                throw new ResourceNotFoundException("Device not found with MAC address: " + macAddress);
+            }
 
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
@@ -43,14 +56,17 @@ public class DataUpdateService {
 
                 DeviceData deviceData = new DeviceData();
                 deviceData.setValue(value);
-                deviceData.setRecordTime(recordTime);
+                deviceData.setRecordTime(new java.sql.Timestamp(recordTime.getTime()));
                 deviceData.setDevice(device);
 
                 deviceDataRepository.save(deviceData);
 
-                if (device.getThreshold() != null && Double.parseDouble(value) >= device.getThreshold()) {
-                    // 发送阈值警告消息（这里需要实现WebSocket或其他实时通信机制）
-                    sendThresholdWarning(device);
+                if (device.getThreshold() != null) {
+                    BigDecimal thresholdValue = BigDecimal.valueOf(device.getThreshold());
+                    BigDecimal currentValue = new BigDecimal(value);
+                    if (currentValue.compareTo(thresholdValue) >= 0) {
+                        sendThresholdWarning(device, currentValue);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -59,7 +75,13 @@ public class DataUpdateService {
         }
     }
 
-    private void sendThresholdWarning(Device device) {
-        // 这里需要实现WebSocket或其他实时通信机制
+    @Autowired
+    private AlertWebSocketHandler alertWebSocketHandler;
+
+    public void sendThresholdWarning(Device device, BigDecimal currentValue) {
+        String message = String.format("警告: 设备 %s (MAC地址: %s) 的当前数值 %.2f 超过阈值 %.2f", 
+            device.getName(), device.getMacAddress(), currentValue, device.getThreshold());
+        logger.warn(message);  // 添加这行日志
+        alertWebSocketHandler.sendAlertToAll(message);
     }
 }
