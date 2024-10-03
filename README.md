@@ -92,7 +92,7 @@ src
 1. **克隆项目**
 
    ```bash
-   git clone https://github.com/your-repo/backpro.git
+   git clone https://github.com/HT3301601278/BackPro.git
    cd backpro
    ```
 
@@ -106,17 +106,17 @@ src
      spring.datasource.username=root
      spring.datasource.password=123456
      spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
-
+  
      spring.jpa.hibernate.ddl-auto=update
      spring.jpa.show-sql=true
      spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL57Dialect
      spring.jpa.open-in-view=true
-
+  
      spring.jpa.properties.hibernate.jdbc.time_zone=Asia/Shanghai
-
+  
      spring.jackson.date-format=yyyy-MM-dd HH:mm:ss
      spring.jackson.time-zone=Asia/Shanghai
-
+  
      logging.level.org.example.backpro=DEBUG
      ```
 
@@ -779,15 +779,15 @@ src
 
   ```javascript
   const socket = new WebSocket('ws://localhost:8080/ws/alerts');
-
+  
   socket.onmessage = function(event) {
       console.log('警报消息:', event.data);
   };
-
+  
   socket.onopen = function() {
       console.log('已连接到 WebSocket 服务器');
   };
-
+  
   socket.onclose = function() {
       console.log('WebSocket 连接已关闭');
   };
