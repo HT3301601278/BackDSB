@@ -134,201 +134,636 @@ src
 
    应用将启动在 `http://localhost:8080`。
 
-## API 文档
+## API文档
 
-### 用户相关
+### 1. 用户管理
 
-- **注册用户**
+#### 1.1 用户注册
 
-  ```
-  POST /api/users/register
-  ```
+- **URL**: `/api/users/register`
 
-  **请求体**：
+- **方法**: POST
 
-  ```json
-  {
-    "username": "user1",
-    "password": "password123"
-  }
-  ```
+- **描述**: 注册新用户
 
-- **登录用户**
-
-  ```
-  POST /api/users/login
-  ```
-
-  **请求体**：
+- **请求体**:
 
   ```json
   {
-    "username": "user1",
-    "password": "password123"
+    "username": "string",
+    "password": "string"
   }
   ```
 
-- **修改密码**
+- **成功响应**: 
 
+  - 状态码: 200 OK
+  - 响应体: 注册成功的用户信息
+
+- **错误响应**:
+
+  - 状态码: 400 Bad Request
+  - 响应体: 错误信息字符串
+
+**测试用例**:
+
+1. 注册新用户:
+
+   ```
+   POST http://localhost:8080/api/users/register
+   Content-Type: application/json
+   
+   {
+     "username": "testuser",
+     "password": "password123"
+   }
+   ```
+
+   预期结果: 200 OK,返回包含用户ID的用户信息
+
+2. 尝试注册已存在的用户名:
+
+   ```
+   POST http://localhost:8080/api/users/register
+   Content-Type: application/json
+   
+   {
+     "username": "testuser",
+     "password": "anotherpassword"
+   }
+   ```
+
+   预期结果: 400 Bad Request,返回"用户名已存在"错误信息
+
+#### 1.2 用户登录
+
+- **URL**: `/api/users/login`
+
+- **方法**: POST
+
+- **描述**: 用户登录
+
+- **请求体**:
+
+  ```json
+  {
+    "username": "string",
+    "password": "string"
+  }
   ```
-  PUT /api/users/{id}/password
-  ```
 
-  **请求参数**：
+- **成功响应**: 
 
-  - `id`：用户ID
+  - 状态码: 200 OK
+  - 响应体: 登录成功的用户信息
 
-  **请求参数**：
+- **错误响应**:
 
+  - 状态码: 400 Bad Request
+  - 响应体: 空
+
+**测试用例**:
+
+1. 正确的用户名和密码:
+
+   ```
+   POST http://localhost:8080/api/users/login
+   Content-Type: application/json
+   
+   {
+     "username": "testuser",
+     "password": "password123"
+   }
+   ```
+
+   预期结果: 200 OK,返回用户信息
+
+2. 错误的密码:
+
+   ```
+   POST http://localhost:8080/api/users/login
+   Content-Type: application/json
+   
+   {
+     "username": "testuser",
+     "password": "wrongpassword"
+   }
+   ```
+
+   预期结果: 400 Bad Request,无响应体
+
+#### 1.3 修改密码
+
+- **URL**: `/api/users/{id}/password`
+- **方法**: PUT
+- **描述**: 修改用户密码
+- **路径参数**: 
+  - `id`: 用户ID
+- **查询参数**:
   - `oldPassword`: 旧密码
   - `newPassword`: 新密码
+- **成功响应**: 
+  - 状态码: 200 OK
+  - 响应体: 更新后的用户信息
+- **错误响应**:
+  - 状态码: 400 Bad Request (旧密码不正确)
+  - 状态码: 404 Not Found (用户不存在)
+  - 响应体: 错误信息字符串
 
-### 设备相关
+**测试用例**:
 
-- **添加设备**
+1. 正确修改密码:
 
-  ```
-  POST /api/devices
-  ```
+   ```
+   PUT http://localhost:8080/api/users/1/password?oldPassword=password123&newPassword=newpassword123
+   ```
 
-  **请求体**：
+   预期结果: 200 OK,返回更新后的用户信息
 
-  ```json
-  {
-    "name": "Device A",
-    "macAddress": "00:1B:44:11:3A:B7",
-    "communicationChannel": "Channel 1",
-    "threshold": 75.0,
-    "isOn": true
-  }
-  ```
+2. 旧密码错误:
 
-- **删除设备**
+   ```
+   PUT http://localhost:8080/api/users/1/password?oldPassword=wrongpassword&newPassword=newpassword123
+   ```
 
-  ```
-  DELETE /api/devices/{id}
-  ```
+   预期结果: 400 Bad Request,返回"旧密码不正确"错误信息
 
-- **获取所有设备**
+3. 用户不存在:
 
-  ```
-  GET /api/devices
-  ```
+   ```
+   PUT http://localhost:8080/api/users/999/password?oldPassword=password123&newPassword=newpassword123
+   ```
 
-  **请求参数**：
+   预期结果: 404 Not Found
 
-  - `page`：页码（默认0）
-  - `size`：每页大小（默认10）
+### 2. 设备管理
 
-- **获取设备详情**
+#### 2.1 添加设备
 
-  ```
-  GET /api/devices/{id}
-  ```
+- **URL**: `/api/devices`
 
-- **更新设备信息**
+- **方法**: POST
 
-  ```
-  PUT /api/devices/{id}
-  ```
+- **描述**: 添加新设备
 
-  **请求体**：
+- **请求体**:
 
   ```json
   {
-    "name": "Device B",
-    "macAddress": "00:1B:44:11:3A:B8",
-    "communicationChannel": "Channel 2",
-    "threshold": 80.0
+    "name": "string",
+    "macAddress": "string",
+    "communicationChannel": "string"
   }
   ```
 
-- **设置设备阈值**
+- **成功响应**: 
 
+  - 状态码: 200 OK
+  - 响应体: 新添加的设备信息
+
+- **错误响应**:
+
+  - 状态码: 400 Bad Request
+  - 响应体: 错误信息字符串
+
+**测试用例**:
+
+1. 添加新设备:
+
+   ```
+   POST http://localhost:8080/api/devices
+   Content-Type: application/json
+   
+   {
+     "name": "Test Device",
+     "macAddress": "00:11:22:33:44:55",
+     "communicationChannel": "WiFi"
+   }
+   ```
+
+   预期结果: 200 OK,返回新添加的设备信息
+
+2. 添加重复的MAC地址设备:
+
+   ```
+   POST http://localhost:8080/api/devices
+   Content-Type: application/json
+   
+   {
+     "name": "Another Device",
+     "macAddress": "00:11:22:33:44:55",
+     "communicationChannel": "Bluetooth"
+   }
+   ```
+
+   预期结果: 400 Bad Request,返回错误信息
+
+#### 2.2 删除设备
+
+- **URL**: `/api/devices/{id}`
+- **方法**: DELETE
+- **描述**: 删除指定ID的设备
+- **路径参数**: 
+  - `id`: 设备ID
+- **成功响应**: 
+  - 状态码: 200 OK
+- **错误响应**:
+  - 状态码: 404 Not Found
+  - 响应体: 错误信息字符串
+
+**测试用例**:
+
+1. 删除存在的设备:
+
+   ```
+   DELETE http://localhost:8080/api/devices/1
+   ```
+
+   预期结果: 200 OK
+
+2. 删除不存在的设备:
+
+   ```
+   DELETE http://localhost:8080/api/devices/999
+   ```
+
+   预期结果: 404 Not Found
+
+#### 2.3 获取所有设备(分页)
+
+- **URL**: `/api/devices`
+- **方法**: GET
+- **描述**: 获取所有设备信息(分页)
+- **查询参数**:
+  - `page`: 页码 (默认值: 0)
+  - `size`: 每页大小 (默认值: 10)
+- **成功响应**: 
+  - 状态码: 200 OK
+  - 响应体: 设备信息列表和分页信息
+- **错误响应**:
+  - 状态码: 400 Bad Request
+  - 响应体: 错误信息字符串
+
+**测试用例**:
+
+1. 获取第一页设备信息:
+
+   ```
+   GET http://localhost:8080/api/devices?page=0&size=10
+   ```
+
+   预期结果: 200 OK,返回设备列表和分页信息
+
+2. 获取第二页设备信息:
+
+   ```
+   GET http://localhost:8080/api/devices?page=1&size=5
+   ```
+
+   预期结果: 200 OK,返回设备列表和分页信息
+
+#### 2.4 获取单个设备信息
+
+- **URL**: `/api/devices/{id}`
+- **方法**: GET
+- **描述**: 获取指定ID的设备信息
+- **路径参数**: 
+  - `id`: 设备ID
+- **成功响应**: 
+  - 状态码: 200 OK
+  - 响应体: 设备信息
+- **错误响应**:
+  - 状态码: 404 Not Found
+  - 响应体: 错误信息字符串
+
+**测试用例**:
+
+1. 获取存在的设备信息:
+
+   ```
+   GET http://localhost:8080/api/devices/1
+   ```
+
+   预期结果: 200 OK,返回设备信息
+
+2. 获取不存在的设备信息:
+
+   ```
+   GET http://localhost:8080/api/devices/999
+   ```
+
+   预期结果: 404 Not Found
+
+#### 2.5 更新设备信息
+
+- **URL**: `/api/devices/{id}`
+
+- **方法**: PUT
+
+- **描述**: 更新指定ID的设备信息
+
+- **路径参数**: 
+
+  - `id`: 设备ID
+
+- **请求体**:
+
+  ```json
+  {
+    "name": "string",
+    "macAddress": "string",
+    "communicationChannel": "string"
+  }
   ```
-  PUT /api/devices/{id}/threshold
-  ```
 
-  **请求参数**：
+- **成功响应**: 
 
-  - `threshold`: 新的阈值
+  - 状态码: 200 OK
+  - 响应体: 更新后的设备信息
 
-- **切换设备状态**
+- **错误响应**:
 
-  ```
-  PUT /api/devices/{id}/toggle
-  ```
+  - 状态码: 404 Not Found
+  - 响应体: 错误信息字符串
 
-### 数据生成与更新
+**测试用例**:
 
-- **启动数据生成**
+1. 更新存在的设备信息:
 
-  ```
-  POST /api/data-generation/start
-  ```
+   ```
+   PUT http://localhost:8080/api/devices/1
+   Content-Type: application/json
+   
+   {
+     "name": "Updated Device",
+     "macAddress": "AA:BB:CC:DD:EE:FF",
+     "communicationChannel": "5G"
+   }
+   ```
 
-  **请求参数**：
+   预期结果: 200 OK,返回更新后的设备信息
 
-  - `deviceId`: 设备ID
-  - `durationMinutes`: 持续时间（分钟）
-  - `intervalSeconds`: 数据生成间隔（秒）
-  - `minValue`: 最小值
-  - `maxValue`: 最大值
-  - `startTime`: 开始时间（格式：yyyy-MM-dd HH:mm:ss）
+2. 更新不存在的设备信息:
 
-- **停止数据生成**
+   ```
+   PUT http://localhost:8080/api/devices/999
+   Content-Type: application/json
+   
+   {
+     "name": "Non-existent Device",
+     "macAddress": "11:22:33:44:55:66",
+     "communicationChannel": "4G"
+   }
+   ```
 
-  ```
-  POST /api/data-generation/stop
-  ```
+   预期结果: 404 Not Found
 
-  **请求参数**：
+#### 2.6 设置设备阈值
 
-  - `deviceId`: 设备ID
+- **URL**: `/api/devices/{id}/threshold`
+- **方法**: PUT
+- **描述**: 设置指定ID设备的阈值
+- **路径参数**: 
+  - `id`: 设备ID
+- **查询参数**:
+  - `threshold`: 阈值
+- **成功响应**: 
+  - 状态码: 200 OK
+  - 响应体: 更新后的设备信息
+- **错误响应**:
+  - 状态码: 404 Not Found
+  - 响应体: 错误信息字符串
 
-- **更新数据**
+**测试用例**:
 
-  ```
-  POST /api/data/update
-  ```
+1. 设置存在设备的阈值:
 
-  **请求参数**：
+   ```
+   PUT http://localhost:8080/api/devices/1/threshold?threshold=50.5
+   ```
 
+   预期结果: 200 OK,返回更新后的设备信息
+
+2. 设置不存在设备的阈值:
+
+   ```
+   PUT http://localhost:8080/api/devices/999/threshold?threshold=30.0
+   ```
+
+   预期结果: 404 Not Found
+
+#### 2.7 切换设备开关状态
+
+- **URL**: `/api/devices/{id}/toggle`
+- **方法**: PUT
+- **描述**: 切换指定ID设备的开关状态
+- **路径参数**: 
+  - `id`: 设备ID
+- **成功响应**: 
+  - 状态码: 200 OK
+  - 响应体: 更新后的设备信息
+- **错误响应**:
+  - 状态码: 404 Not Found
+  - 响应体: 错误信息字符串
+
+**测试用例**:
+
+1. 切换存在设备的状态:
+
+   ```
+   PUT http://localhost:8080/api/devices/1/toggle
+   ```
+
+   预期结果: 200 OK,返回更新后的设备信息
+
+2. 切换不存在设备的状态:
+
+   ```
+   PUT http://localhost:8080/api/devices/999/toggle
+   ```
+
+   预期结果: 404 Not Found
+
+#### 2.8 获取所有设备列表(不分页)
+
+- **URL**: `/api/devices/list`
+- **方法**: GET
+- **描述**: 获取所有设备信息(不分页)
+- **成功响应**: 
+  - 状态码: 200 OK
+  - 响应体: 所有设备信息列表
+- **错误响应**:
+  - 状态码: 500 Internal Server Error
+  - 响应体: 错误信息字符串
+
+**测试用例**:
+
+1. 获取所有设备列表:
+
+   ```
+   GET http://localhost:8080/api/devices/list
+   ```
+
+   预期结果: 200 OK,返回所有设备信息列表
+
+### 3. 设备数据管理
+
+#### 3.1 获取设备数据(按时间范围)
+
+- **URL**: `/api/devices/{id}/data`
+- **方法**: GET
+- **描述**: 获取指定ID设备在给定时间范围内的数据
+- **路径参数**: 
+  - `id`: 设备ID
+- **查询参数**:
+  - `startTime`: 开始时间 (格式: yyyy-MM-dd HH:mm:ss)
+  - `endTime`: 结束时间 (格式: yyyy-MM-dd HH:mm:ss)
+  - `page`: 页码 (默认值: 0)
+  - `size`: 每页大小 (默认值: 10)
+- **成功响应**: 
+  - 状态码: 200 OK
+  - 响应体: 设备数据列表和分页信息
+- **错误响应**:
+  - 状态码: 404 Not Found
+  - 响应体: 错误信息字符串
+
+**测试用例**:
+
+1. 获取存在设备的数据:
+
+   ```
+   GET http://localhost:8080/api/devices/1/data?startTime=2023-01-01 00:00:00&endTime=2023-12-31 23:59:59&page=0&size=10
+   ```
+
+   预期结果: 200 OK,返回设备数据列表和分页信息
+
+2. 获取不存在设备的数据:
+
+   ```
+   GET http://localhost:8080/api/devices/999/data?startTime=2023-01-01 00:00:00&endTime=2023-12-31 23:59:59&page=0&size=10
+   ```
+
+   预期结果: 404 Not Found
+
+### 4. 数据更新
+
+#### 4.1 更新设备数据
+
+- **URL**: `/api/data/update`
+- **方法**: POST
+- **描述**: 从外部API获取并更新设备数据
+- **查询参数**:
   - `macAddress`: 设备MAC地址
   - `channel`: 通信通道
-  - `duration`: 持续时间
+  - `duration`: 数据持续时间
+- **成功响应**: 
+  - 状态码: 200 OK
+  - 响应体: "数据更新成功"
+- **错误响应**:
+  - 状态码: 404 Not Found (设备未找到)
+  - 状态码: 500 Internal Server Error (其他错误)
+  - 响应体: 错误信息字符串
 
-### 数据查询
+**测试用例**:
 
-- **按时间范围查询设备数据**
+1. 更新存在设备的数据:
 
-  ```
-  GET /api/devices/{id}/data
-  ```
+   ```
+   POST http://localhost:8080/api/data/update?macAddress=00:11:22:33:44:55&channel=WiFi&duration=1h
+   ```
 
-  **请求参数**：
+   预期结果: 200 OK, 返回"数据更新成功"
 
-  - `startTime`: 开始时间（格式：yyyy-MM-dd HH:mm:ss）
-  - `endTime`: 结束时间（格式：yyyy-MM-dd HH:mm:ss）
-  - `page`: 页码（默认0）
-  - `size`: 每页大小（默认10）
+2. 更新不存在设备的数据:
 
-- **添加设备数据**
+   ```
+   POST http://localhost:8080/api/data/update?macAddress=99:99:99:99:99:99&channel=WiFi&duration=1h
+   ```
 
-  ```
-  POST /api/devices/{id}/data
-  ```
+   预期结果: 404 Not Found, 返回错误信息
 
-  **请求参数**：
+### 5. 数据生成
 
-  - `recordTime`: 记录时间（格式：yyyy-MM-dd HH:mm:ss）
-  - `value`: 数据值
+#### 5.1 开始数据生成
 
-- **查询超过阈值的设备数据**
+- **URL**: `/api/data-generation/start`
+- **方法**: POST
+- **描述**: 开始为指定设备生成模拟数据
+- **查询参数**:
+  - `deviceId`: 设备ID
+  - `durationMinutes`: 生成数据的持续时间（分钟）
+  - `intervalSeconds`: 数据生成的时间间隔（秒）
+  - `minValue`: 生成数据的最小值
+  - `maxValue`: 生成数据的最大值
+  - `startTime`: 开始生成数据的时间（格式: yyyy-MM-dd HH:mm:ss）
+- **成功响应**: 
+  - 状态码: 200 OK
+  - 响应体: "数据生成任务已启动"
+- **错误响应**:
+  - 状态码: 404 Not Found (设备未找到)
+  - 状态码: 500 Internal Server Error (其他错误)
+  - 响应体: 错误信息字符串
 
-  ```
-  GET /api/devices/{id}/data/above-threshold
-  ```
+**测试用例**:
+
+1. 为存在的设备开始数据生成:
+
+   ```
+   POST http://localhost:8080/api/data-generation/start?deviceId=1&durationMinutes=60&intervalSeconds=5&minValue=0&maxValue=100&startTime=2023-06-01 10:00:00
+   ```
+
+   预期结果: 200 OK, 返回"数据生成任务已启动"
+
+2. 为不存在的设备开始数据生成:
+
+   ```
+   POST http://localhost:8080/api/data-generation/start?deviceId=999&durationMinutes=60&intervalSeconds=5&minValue=0&maxValue=100&startTime=2023-06-01 10:00:00
+   ```
+
+   预期结果: 404 Not Found
+
+#### 5.2 停止数据生成
+
+- **URL**: `/api/data-generation/stop`
+- **方法**: POST
+- **描述**: 停止指定设备的数据生成任务
+- **查询参数**:
+  - `deviceId`: 设备ID
+- **成功响应**: 
+  - 状态码: 200 OK
+  - 响应体: "数据生成任务已停止"
+- **错误响应**:
+  - 状态码: 500 Internal Server Error
+  - 响应体: 错误信息字符串
+
+**测试用例**:
+
+1. 停止存在设备的数据生成:
+
+   ```
+   POST http://localhost:8080/api/data-generation/stop?deviceId=1
+   ```
+
+   预期结果: 200 OK, 返回"数据生成任务已停止"
+
+2. 停止不存在设备的数据生成:
+
+   ```
+   POST http://localhost:8080/api/data-generation/stop?deviceId=999
+   ```
+
+   预期结果: 200 OK, 返回"数据生成任务已停止"（即使设备不存在，也不会报错）
+
+### 6. WebSocket 警报
+
+- **URL**: `ws://localhost:8080/ws/alerts`
+- **描述**: 建立WebSocket连接以接收实时警报
+
+**测试用例**:
+
+1. 使用WebSocket客户端（如浏览器的JavaScript）连接到 `ws://localhost:8080/ws/alerts`
+2. 触发一个警报（例如，通过数据生成使设备数值超过阈值）
+3. 验证WebSocket客户端是否收到警报消息
 
 ## WebSocket 实时通知
 
@@ -360,33 +795,41 @@ src
 
 ## 数据库设计
 
-### 用户表 `users`
+| 表名 | 字段名 | 数据类型 | 描述 |
+|------|--------|----------|------|
+| devices | id | Long | 设备ID，主键 |
+| | name | String | 设备名称 |
+| | mac_address | String | 设备MAC地址 |
+| | communication_channel | String | 通信通道 |
+| | threshold | Double | 阈值 |
+| | is_on | Boolean | 设备是否开启 |
+| device_data | id | Long | 设备数据ID，主键 |
+| | value | String | 数据值 |
+| | record_time | Timestamp | 记录时间 |
+| | device_id | Long | 关联的设备ID，外键 |
+| users | id | Long | 用户ID，主键 |
+| | username | String | 用户名，唯一 |
+| | password | String | 密码 |
 
-| 字段       | 类型          | 描述     |
-| ---------- | ------------- | -------- |
-| id         | BIGINT        | 主键，自增 |
-| username   | VARCHAR(255)  | 用户名，唯一 |
-| password   | VARCHAR(255)  | 密码     |
+这个数据库结构反映了项目中的三个主要实体：设备（Device）、设备数据（DeviceData）和用户（User）。以下是对每个表的详细说明：
 
-### 设备表 `devices`
+1. devices 表：
+   - 存储设备的基本信息
+   - 包含设备的唯一标识、名称、MAC地址、通信通道等
+   - threshold 字段用于存储设备的阈值，用于数据监控
+   - is_on 字段表示设备的开启状态
 
-| 字段               | 类型          | 描述              |
-| ------------------ | ------------- | ----------------- |
-| id                 | BIGINT        | 主键，自增        |
-| name               | VARCHAR(255)  | 设备名称          |
-| macAddress         | VARCHAR(255)  | 设备 MAC 地址，唯一 |
-| communicationChannel | VARCHAR(255) | 通信通道          |
-| threshold          | DOUBLE        | 数据阈值          |
-| isOn               | BOOLEAN       | 设备状态（开/关）  |
+2. device_data 表：
+   - 存储设备产生的数据
+   - 每条记录包含数据值、记录时间和关联的设备ID
+   - 通过 device_id 外键与 devices 表关联
 
-### 设备数据表 `device_data`
+3. users 表：
+   - 存储用户信息
+   - 包含用户的唯一标识、用户名和密码
+   - username 字段设置为唯一，确保用户名不重复
 
-| 字段        | 类型            | 描述           |
-| ----------- | --------------- | -------------- |
-| id          | BIGINT          | 主键，自增     |
-| value       | VARCHAR(255)    | 数据值         |
-| recordTime  | TIMESTAMP       | 记录时间       |
-| device_id   | BIGINT          | 外键，关联设备 |
+这个数据库结构支持了项目中的设备管理、数据收集和用户认证功能。设备可以生成多条数据记录，而每条数据记录都与特定设备关联。用户表则用于管理系统的访问权限。
 
 ## 测试
 
@@ -433,29 +876,3 @@ mvn test
   ```properties
   logging.level.org.example.backpro=DEBUG
   ```
-
-## 使用示例
-
-### 注册与登录
-
-1. **注册用户**
-
-   发送 `POST` 请求到 `/api/users/register`，包含用户名和密码。
-
-2. **登录用户**
-
-   发送 `POST` 请求到 `/api/users/login`，包含用户名和密码，成功后可进行后续操作。
-
-### 设备管理
-
-1. **添加设备**
-
-   发送 `POST` 请求到 `/api/devices`，包含设备名称、MAC 地址、通信通道等信息。
-
-2. **启动数据生成**
-
-   发送 `POST` 请求到 `/api/data-generation/start`，指定设备ID、持续时间、间隔时间等参数，系统将开始生成并存储设备数据。
-
-3. **实时接收警报**
-
-   客户端通过 WebSocket 连接到 `ws://localhost:8080/ws/alerts`，监听实时警报消息。
