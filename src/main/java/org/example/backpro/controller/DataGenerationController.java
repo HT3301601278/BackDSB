@@ -48,4 +48,10 @@ public class DataGenerationController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("停止数据生成任务失败: " + e.getMessage());
         }
     }
+
+    @PostMapping("/test-save")
+    public ResponseEntity<String> testDataSave(@RequestParam Long deviceId) {
+        dataGenerationService.testDataSave(deviceId);
+        return ResponseEntity.ok("测试数据保存完成，请检查日志和数据库");
+    }
 }

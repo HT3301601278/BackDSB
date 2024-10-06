@@ -21,6 +21,9 @@ import org.example.backpro.exception.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.example.backpro.entity.Alert;
+import org.example.backpro.repository.AlertRepository;
+
 @Service
 public class DataUpdateService {
     private static final Logger logger = LoggerFactory.getLogger(DataUpdateService.class);
@@ -30,6 +33,9 @@ public class DataUpdateService {
 
     @Autowired
     private DeviceDataRepository deviceDataRepository;
+
+    @Autowired
+    private AlertRepository alertRepository;
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -81,7 +87,11 @@ public class DataUpdateService {
     public void sendThresholdWarning(Device device, BigDecimal currentValue) {
         String message = String.format("警告: 设备 %s (MAC地址: %s) 的当前数值 %.2f 超过阈值 %.2f", 
             device.getName(), device.getMacAddress(), currentValue, device.getThreshold());
-        logger.warn(message);  // 添加这行日志
+        logger.warn(message);
         alertWebSocketHandler.sendAlertToAll(message);
+        
+        // 保存警告信息到数据库
+        Alert alert = new Alert(message, device);
+        alertRepository.save(alert);
     }
 }

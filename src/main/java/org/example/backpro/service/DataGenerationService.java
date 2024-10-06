@@ -2,8 +2,10 @@ package org.example.backpro.service;
 
 import org.example.backpro.entity.Device;
 import org.example.backpro.entity.DeviceData;
+import org.example.backpro.entity.Alert;
 import org.example.backpro.repository.DeviceDataRepository;
 import org.example.backpro.repository.DeviceRepository;
+import org.example.backpro.repository.AlertRepository;
 import org.example.backpro.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -26,6 +28,8 @@ import java.math.BigDecimal;
 
 import org.example.backpro.websocket.AlertWebSocketHandler;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
 public class DataGenerationService {
 
@@ -37,6 +41,9 @@ public class DataGenerationService {
 
     @Autowired
     private AlertWebSocketHandler alertWebSocketHandler;
+
+    @Autowired
+    private AlertRepository alertRepository;
 
     private final Random random = new Random();
     private final Map<Long, ScheduledExecutorService> deviceExecutors = new ConcurrentHashMap<>();
@@ -67,36 +74,28 @@ public class DataGenerationService {
         logger.info("数据生成任务已调度：deviceId={}", deviceId);
     }
 
-    private void generateAndSaveData(Device device, int minValue, int maxValue, Date startTime, Long deviceId, int intervalSeconds) {
-        DeviceData deviceData = new DeviceData();
-        deviceData.setDevice(device);
-        int randomValue = random.nextInt(maxValue - minValue + 1) + minValue;
-        deviceData.setValue(String.valueOf(randomValue));
-
-        AtomicInteger runCounter = deviceRunCounters.computeIfAbsent(deviceId, k -> new AtomicInteger(0));
-        int runNumber = runCounter.incrementAndGet();
-
-        ZoneId zoneId = ZoneId.of("Asia/Shanghai");
-        ZonedDateTime startZdt = ZonedDateTime.ofInstant(startTime.toInstant(), zoneId);
-        ZonedDateTime recordZdt = startZdt.plusSeconds(runNumber * intervalSeconds);
-        
-        deviceData.setRecordTime(java.sql.Timestamp.from(recordZdt.toInstant()));
-        
-        deviceDataRepository.save(deviceData);
-
-        if (device.getThreshold() != null) {
-            BigDecimal thresholdValue = BigDecimal.valueOf(device.getThreshold());
-            BigDecimal currentValue = new BigDecimal(deviceData.getValue());
-            if (currentValue.compareTo(thresholdValue) >= 0) {
-                logger.warn("警告: 设备 {} (ID: {}) 的当前数值 {} 超过阈值 {}", 
-                    device.getName(), device.getId(), currentValue, thresholdValue);
-                String message = String.format("警告: 设备 %s (ID: %d) 的当前数值 %.2f 超过阈值 %.2f", 
-                    device.getName(), device.getId(), currentValue, thresholdValue);
-                alertWebSocketHandler.sendAlertToAll(message);
+    private void generateAndSaveData(Device device, int minValue, int maxValue, Date recordTime, Long deviceId, int intervalSeconds) {
+        try {
+            int value = random.nextInt(maxValue - minValue + 1) + minValue;
+            
+            DeviceData deviceData = new DeviceData();
+            deviceData.setDevice(device);
+            deviceData.setValue(String.valueOf(value));
+            deviceData.setRecordTime(new java.sql.Timestamp(recordTime.getTime()));
+            
+            DeviceData savedData = deviceDataRepository.save(deviceData);
+            logger.info("成功保存设备数据：ID = {}, 设备 ID = {}, 值 = {}, 时间 = {}", 
+                     savedData.getId(), savedData.getDevice().getId(), savedData.getValue(), savedData.getRecordTime());
+            
+            if (device.getThreshold() != null && value >= device.getThreshold()) {
+                sendThresholdWarning(device, BigDecimal.valueOf(value));
             }
-        }
 
-        logger.info("生成设备ID {} 的数据，记录时间：{}", deviceId, recordZdt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            // 更新记录时间
+            recordTime = new Date(recordTime.getTime() + intervalSeconds * 1000L);
+        } catch (Exception e) {
+            logger.error("生成和保存数据时发生错误：", e);
+        }
     }
 
     public void stopDataGeneration(Long deviceId) {
@@ -113,5 +112,30 @@ public class DataGenerationService {
                 Thread.currentThread().interrupt();
             }
         }
+    }
+
+    @Transactional
+    public void testDataSave(Long deviceId) {
+        Device device = deviceRepository.findById(deviceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Device not found with id: " + deviceId));
+        
+        DeviceData testData = new DeviceData();
+        testData.setDevice(device);
+        testData.setValue("Test Value");
+        testData.setRecordTime(new java.sql.Timestamp(System.currentTimeMillis()));
+        
+        DeviceData savedData = deviceDataRepository.save(testData);
+        logger.info("测试数据保存成功：ID = {}", savedData.getId());
+    }
+
+    private void sendThresholdWarning(Device device, BigDecimal currentValue) {
+        String message = String.format("警告: 设备 %s (ID: %d) 的当前数值 %.2f 超过阈值 %.2f", 
+            device.getName(), device.getId(), currentValue, device.getThreshold());
+        logger.warn(message);
+        alertWebSocketHandler.sendAlertToAll(message);
+        
+        // 保存警告信息到数据库
+        Alert alert = new Alert(message, device);
+        alertRepository.save(alert);
     }
 }
