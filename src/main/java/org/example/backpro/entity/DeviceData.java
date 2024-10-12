@@ -1,7 +1,6 @@
 package org.example.backpro.entity;
 
 import javax.persistence.*;
-import java.util.Date;
 
 @Entity
 @Table(name = "device_data")
@@ -10,7 +9,7 @@ public class DeviceData {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String value;
-    
+
     @Column(columnDefinition = "TIMESTAMP")
     private java.sql.Timestamp recordTime;
 

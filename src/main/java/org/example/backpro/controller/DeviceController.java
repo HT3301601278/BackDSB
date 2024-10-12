@@ -4,14 +4,13 @@ import org.example.backpro.entity.Device;
 import org.example.backpro.entity.DeviceData;
 import org.example.backpro.service.DeviceService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import org.springframework.data.domain.Page;
-
-import org.springframework.format.annotation.DateTimeFormat;
 import java.util.Date;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/devices")

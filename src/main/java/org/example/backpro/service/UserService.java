@@ -1,10 +1,10 @@
 package org.example.backpro.service;
 
 import org.example.backpro.entity.User;
+import org.example.backpro.exception.ResourceNotFoundException;
 import org.example.backpro.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.example.backpro.exception.ResourceNotFoundException;
 
 @Service
 public class UserService {
@@ -27,11 +27,11 @@ public class UserService {
     public User changePassword(Long userId, String oldPassword, String newPassword) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
-        
+
         if (!user.getPassword().equals(oldPassword)) {
             throw new IllegalArgumentException("旧密码不正确");
         }
-        
+
         user.setPassword(newPassword);
         return userRepository.save(user);
     }

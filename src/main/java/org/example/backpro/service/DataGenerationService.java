@@ -1,34 +1,29 @@
 package org.example.backpro.service;
 
+import org.example.backpro.entity.Alert;
 import org.example.backpro.entity.Device;
 import org.example.backpro.entity.DeviceData;
-import org.example.backpro.entity.Alert;
+import org.example.backpro.exception.ResourceNotFoundException;
+import org.example.backpro.repository.AlertRepository;
 import org.example.backpro.repository.DeviceDataRepository;
 import org.example.backpro.repository.DeviceRepository;
-import org.example.backpro.repository.AlertRepository;
-import org.example.backpro.exception.ResourceNotFoundException;
+import org.example.backpro.websocket.AlertWebSocketHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
 import java.util.Date;
+import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.math.BigDecimal;
-
-import org.example.backpro.websocket.AlertWebSocketHandler;
-
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DataGenerationService {
@@ -77,16 +72,16 @@ public class DataGenerationService {
     private void generateAndSaveData(Device device, int minValue, int maxValue, Date recordTime, Long deviceId, int intervalSeconds) {
         try {
             int value = random.nextInt(maxValue - minValue + 1) + minValue;
-            
+
             DeviceData deviceData = new DeviceData();
             deviceData.setDevice(device);
             deviceData.setValue(String.valueOf(value));
             deviceData.setRecordTime(new java.sql.Timestamp(recordTime.getTime()));
-            
+
             DeviceData savedData = deviceDataRepository.save(deviceData);
-            logger.info("成功保存设备数据：ID = {}, 设备 ID = {}, 值 = {}, 时间 = {}", 
+            logger.info("成功保存设备数据：ID = {}, 设备 ID = {}, 值 = {}, 时间 = {}",
                      savedData.getId(), savedData.getDevice().getId(), savedData.getValue(), savedData.getRecordTime());
-            
+
             if (device.getThreshold() != null && value >= device.getThreshold()) {
                 sendThresholdWarning(device, BigDecimal.valueOf(value));
             }
@@ -118,22 +113,22 @@ public class DataGenerationService {
     public void testDataSave(Long deviceId) {
         Device device = deviceRepository.findById(deviceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Device not found with id: " + deviceId));
-        
+
         DeviceData testData = new DeviceData();
         testData.setDevice(device);
         testData.setValue("Test Value");
         testData.setRecordTime(new java.sql.Timestamp(System.currentTimeMillis()));
-        
+
         DeviceData savedData = deviceDataRepository.save(testData);
         logger.info("测试数据保存成功：ID = {}", savedData.getId());
     }
 
     private void sendThresholdWarning(Device device, BigDecimal currentValue) {
-        String message = String.format("警告: 设备 %s (ID: %d) 的当前数值 %.2f 超过阈值 %.2f", 
+        String message = String.format("警告: 设备 %s (ID: %d) 的当前数值 %.2f 超过阈值 %.2f",
             device.getName(), device.getId(), currentValue, device.getThreshold());
         logger.warn(message);
         alertWebSocketHandler.sendAlertToAll(message);
-        
+
         // 保存警告信息到数据库
         Alert alert = new Alert(message, device);
         alertRepository.save(alert);

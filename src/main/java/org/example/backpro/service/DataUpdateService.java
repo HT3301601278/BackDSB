@@ -2,27 +2,23 @@ package org.example.backpro.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.backpro.entity.Alert;
 import org.example.backpro.entity.Device;
 import org.example.backpro.entity.DeviceData;
+import org.example.backpro.exception.ResourceNotFoundException;
+import org.example.backpro.repository.AlertRepository;
 import org.example.backpro.repository.DeviceDataRepository;
 import org.example.backpro.repository.DeviceRepository;
+import org.example.backpro.websocket.AlertWebSocketHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
-import org.example.backpro.websocket.AlertWebSocketHandler;
-
-import java.math.BigDecimal;
-import org.example.backpro.exception.ResourceNotFoundException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import org.example.backpro.entity.Alert;
-import org.example.backpro.repository.AlertRepository;
 
 @Service
 public class DataUpdateService {
@@ -85,11 +81,11 @@ public class DataUpdateService {
     private AlertWebSocketHandler alertWebSocketHandler;
 
     public void sendThresholdWarning(Device device, BigDecimal currentValue) {
-        String message = String.format("警告: 设备 %s (MAC地址: %s) 的当前数值 %.2f 超过阈值 %.2f", 
+        String message = String.format("警告: 设备 %s (MAC地址: %s) 的当前数值 %.2f 超过阈值 %.2f",
             device.getName(), device.getMacAddress(), currentValue, device.getThreshold());
         logger.warn(message);
         alertWebSocketHandler.sendAlertToAll(message);
-        
+
         // 保存警告信息到数据库
         Alert alert = new Alert(message, device);
         alertRepository.save(alert);
